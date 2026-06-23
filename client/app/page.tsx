@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import UploadForm from './components/UploadForm';
 import PostPreview from './components/PostPreview';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'http://localhost:5001';
 
 interface Draft {
   id: string;
