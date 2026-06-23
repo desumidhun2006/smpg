@@ -14,7 +14,7 @@ router.post('/', upload.array('images', 5), async (req, res) => {
       return res.status(400).json({ error: 'description and platforms are required' });
     }
 
-    const platformList = JSON.parse(platforms);
+    const platformList = typeof platforms === 'string' ? JSON.parse(platforms) : platforms;
     let imageBase64 = null;
 
     if (req.files && req.files.length > 0) {
