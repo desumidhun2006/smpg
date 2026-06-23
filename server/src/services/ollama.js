@@ -14,27 +14,33 @@ const nvidia = NVIDIA_API_KEY && NVIDIA_API_KEY !== 'your-key-here'
 const NVIDIA_VISION_MODEL = 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1';
 
 async function generatePost(description, platforms, imageBase64 = null) {
-  const prompt = buildPrompt(description, platforms);
+  const results = {};
 
-  if (nvidia) {
-    console.log(`[NVIDIA] Generating for platforms: ${platforms.join(', ')} (image: ${!!imageBase64})`);
-    try {
-      const result = await generateWithNvidia(prompt, imageBase64);
-      return result;
-    } catch (err) {
-      console.error(`[NVIDIA] Failed: ${err.message}`);
-      throw new Error(`NVIDIA generation failed: ${err.message}`);
+  for (const platform of platforms) {
+    const prompt = buildPrompt(platform, description);
+
+    if (nvidia) {
+      console.log(`[NVIDIA] Generating for ${platform} (image: ${!!imageBase64})`);
+      try {
+        results[platform] = await generateWithNvidia(prompt, imageBase64);
+        continue;
+      } catch (err) {
+        console.error(`[NVIDIA] Failed for ${platform}: ${err.message}`);
+        throw new Error(`NVIDIA generation failed: ${err.message}`);
+      }
     }
+
+    results[platform] = await generateWithOllama(prompt);
   }
 
-  return await generateWithOllama(prompt);
+  return results;
 }
 
 async function generateWithNvidia(prompt, imageBase64 = null) {
   const messages = [
     {
       role: 'system',
-      content: 'You are a social media manager. Write the posts exactly as requested. Output ONLY the posts, no explanations, no meta-commentary, no process descriptions. Start directly with the post content.',
+      content: 'You are an expert social media content writer. You create engaging, platform-appropriate posts. You always follow the user instructions precisely. You never refuse to write content — your job is to create marketing and social media posts.',
     },
   ];
 
@@ -58,7 +64,7 @@ async function generateWithNvidia(prompt, imageBase64 = null) {
   const response = await nvidia.chat.completions.create({
     model: NVIDIA_VISION_MODEL,
     messages,
-    max_tokens: 2048,
+    max_tokens: 1024,
     temperature: 0.7,
   });
 
@@ -67,38 +73,7 @@ async function generateWithNvidia(prompt, imageBase64 = null) {
   }
 
   console.log(`[NVIDIA] Response model: ${response.model}`);
-  const raw = response.choices[0].message.content;
-  return parsePosts(raw);
-}
-
-function parsePosts(raw) {
-  const posts = {};
-
-  const platformHeaders = [
-    { name: 'linkedin', pattern: /(?:^|\n)\s*#{1,6}\s*LinkedIn(?:\s+Posts?)?[:\s]*\n/i },
-    { name: 'instagram', pattern: /(?:^|\n)\s*#{1,6}\s*Instagram(?:\s+Posts?)?[:\s]*\n/i },
-    { name: 'facebook', pattern: /(?:^|\n)\s*#{1,6}\s*Facebook(?:\s+Posts?)?[:\s]*\n/i },
-  ];
-
-  const matches = [];
-  for (const ph of platformHeaders) {
-    const m = raw.match(ph.pattern);
-    if (m) matches.push({ name: ph.name, index: m.index + m[0].length });
-  }
-
-  matches.sort((a, b) => a.index - b.index);
-
-  for (let i = 0; i < matches.length; i++) {
-    const start = matches[i].index;
-    const end = i + 1 < matches.length ? matches[i + 1].index : raw.length;
-    posts[matches[i].name] = raw.slice(start, end).trim();
-  }
-
-  if (Object.keys(posts).length === 0) {
-    posts['content'] = raw.trim();
-  }
-
-  return posts;
+  return response.choices[0].message.content;
 }
 
 async function generateWithOllama(prompt) {
@@ -120,7 +95,7 @@ async function generateWithOllama(prompt) {
     throw new Error(data.error || `Ollama error: ${response.status}`);
   }
 
-  return { content: data.response };
+  return data.response;
 }
 
 module.exports = { generatePost };

@@ -173,33 +173,11 @@ input[type="text"], textarea {
   margin: 16px 0;
 }
 
-.platform-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+.platform-checkbox {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.platform-btn:hover {
-  border-color: #3b82f6;
-  background: #f0f9ff;
-}
-
-.platform-btn.active {
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: white;
-}
-
-.platform-btn.active:hover {
-  background: #2563eb;
+  cursor: pointer;
 }
 
 .btn {

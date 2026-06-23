@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const ollamaService = require('../services/ollama');
+const { getAvailablePlatforms } = require('../services/prompts');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -26,6 +27,10 @@ router.post('/', upload.array('images', 5), async (req, res) => {
     console.error('Generate error:', err.message);
     res.status(500).json({ error: 'Failed to generate post: ' + err.message });
   }
+});
+
+router.get('/platforms', (req, res) => {
+  res.json({ platforms: getAvailablePlatforms() });
 });
 
 module.exports = router;

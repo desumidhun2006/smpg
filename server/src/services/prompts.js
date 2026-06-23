@@ -1,22 +1,26 @@
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
 const PROMPTS_DIR = path.join(__dirname, '../../../prompts');
 
-function loadPromptTemplate() {
-  const filePath = path.join(PROMPTS_DIR, 'master.txt');
+function loadPromptTemplate(platform) {
+  const filePath = path.join(PROMPTS_DIR, `${platform}.txt`);
   if (!fs.existsSync(filePath)) {
-    throw new Error('Master prompt template not found');
+    throw new Error(`Prompt template not found for platform: ${platform}`);
   }
   return fs.readFileSync(filePath, 'utf8');
 }
 
-function buildPrompt(description, platforms) {
-  const template = loadPromptTemplate();
-  const platformList = Array.isArray(platforms) ? platforms.join(', ') : platforms;
-  return template
-    .replace('{{DESCRIPTION}}', description)
-    .replace('{{PLATFORMS}}', platformList);
+function buildPrompt(platform, description) {
+  const template = loadPromptTemplate(platform);
+  return template.replace('{{DESCRIPTION}}', description);
 }
 
-module.exports = { buildPrompt };
+function getAvailablePlatforms() {
+  return fs.readdirSync(PROMPTS_DIR)
+    .filter(f => f.endsWith('.txt'))
+    .map(f => f.replace('.txt', ''));
+}
+
+module.exports = { buildPrompt, getAvailablePlatforms, loadPromptTemplate };
