@@ -23,7 +23,7 @@ async function generatePost(description, platforms, imageBase64 = null) {
       }
     }
 
-    results[platform] = await generateWithOllama(prompt, imageBase64);
+    results[platform] = await generateWithOllama(prompt);
   }
 
   return results;
