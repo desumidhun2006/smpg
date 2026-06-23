@@ -56,7 +56,7 @@ async function generateWithOpenAI(prompt, imageBase64 = null) {
   }
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4.1',
     messages,
     max_tokens: 1024,
     temperature: 0.7,
