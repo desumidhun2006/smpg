@@ -2,10 +2,18 @@ const OpenAI = require('openai');
 const { buildPrompt } = require('./prompts');
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const OLLAMA_BASE = process.env.OLLAMA_URL || 'http://localhost:11434';
 
 const openai = OPENAI_API_KEY && OPENAI_API_KEY !== 'your-key-here'
   ? new OpenAI({ apiKey: OPENAI_API_KEY })
+  : null;
+
+const nvidia = NVIDIA_API_KEY && NVIDIA_API_KEY !== 'your-key-here'
+  ? new OpenAI({
+      apiKey: NVIDIA_API_KEY,
+      baseURL: 'https://integrate.api.nvidia.com/v1',
+    })
   : null;
 
 async function generatePost(description, platforms, imageBase64 = null) {
@@ -14,12 +22,21 @@ async function generatePost(description, platforms, imageBase64 = null) {
   for (const platform of platforms) {
     const prompt = buildPrompt(platform, description);
 
+    if (nvidia && imageBase64) {
+      try {
+        results[platform] = await generateWithNvidia(prompt, imageBase64);
+        continue;
+      } catch (err) {
+        console.warn(`NVIDIA failed for ${platform}: ${err.message}`);
+      }
+    }
+
     if (openai) {
       try {
         results[platform] = await generateWithOpenAI(prompt, imageBase64);
         continue;
       } catch (err) {
-        console.warn(`OpenAI failed for ${platform}, falling back to Ollama: ${err.message}`);
+        console.warn(`OpenAI failed for ${platform}: ${err.message}`);
       }
     }
 
@@ -27,6 +44,41 @@ async function generatePost(description, platforms, imageBase64 = null) {
   }
 
   return results;
+}
+
+async function generateWithNvidia(prompt, imageBase64 = null) {
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert social media content writer. You create engaging, platform-appropriate posts. You always follow the user instructions precisely. You never refuse to write content — your job is to create marketing and social media posts.',
+    },
+  ];
+
+  if (imageBase64) {
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        {
+          type: 'image_url',
+          image_url: {
+            url: `data:image/jpeg;base64,${imageBase64}`,
+          },
+        },
+      ],
+    });
+  } else {
+    messages.push({ role: 'user', content: prompt });
+  }
+
+  const response = await nvidia.chat.completions.create({
+    model: 'autogen/autogen-02',
+    messages,
+    max_tokens: 1024,
+    temperature: 0.7,
+  });
+
+  return response.choices[0].message.content;
 }
 
 async function generateWithOpenAI(prompt, imageBase64 = null) {
