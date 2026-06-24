@@ -23,6 +23,24 @@ interface HistoryItem {
   postedAt: string;
 }
 
+function loadDrafts(): Draft[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem('smpg_drafts') || '[]'); } catch { return []; }
+}
+
+function saveDrafts(drafts: Draft[]) {
+  localStorage.setItem('smpg_drafts', JSON.stringify(drafts));
+}
+
+function loadHistory(): HistoryItem[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem('smpg_history') || '[]'); } catch { return []; }
+}
+
+function saveHistory(history: HistoryItem[]) {
+  localStorage.setItem('smpg_history', JSON.stringify(history));
+}
+
 export default function Home() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -33,29 +51,9 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDrafts = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/drafts`);
-      const data = await res.json();
-      setDrafts(data);
-    } catch (err) {
-      console.error('Failed to fetch drafts:', err);
-    }
-  };
-
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/history`);
-      const data = await res.json();
-      setHistory(data);
-    } catch (err) {
-      console.error('Failed to fetch history:', err);
-    }
-  };
-
   useEffect(() => {
-    fetchDrafts();
-    fetchHistory();
+    setDrafts(loadDrafts());
+    setHistory(loadHistory());
   }, []);
 
   const handleGenerate = async (desc: string, platforms: string[], files: File[]) => {
@@ -88,42 +86,39 @@ export default function Home() {
     }
   };
 
-  const handleSaveDraft = async (content: Record<string, string>, platforms: string[], desc: string) => {
-    try {
-      await fetch(`${API_BASE}/api/drafts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, platforms, description: desc }),
-      });
-      fetchDrafts();
-    } catch (err) {
-      console.error('Failed to save draft:', err);
-    }
+  const handleSaveDraft = (content: Record<string, string>, platforms: string[], desc: string) => {
+    const draft: Draft = {
+      id: crypto.randomUUID(),
+      content,
+      platforms,
+      description: desc,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [draft, ...drafts];
+    setDrafts(updated);
+    saveDrafts(updated);
   };
 
-  const handlePost = async (content: Record<string, string>, platforms: string[], desc: string) => {
-    try {
-      await fetch(`${API_BASE}/api/post`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, platforms, description: desc }),
-      });
-      fetchHistory();
-    } catch (err) {
-      console.error('Failed to post:', err);
-    }
+  const handlePost = (content: Record<string, string>, platforms: string[], desc: string) => {
+    const item: HistoryItem = {
+      id: crypto.randomUUID(),
+      content,
+      platforms,
+      description: desc,
+      postedAt: new Date().toISOString(),
+    };
+    const updated = [item, ...history];
+    setHistory(updated);
+    saveHistory(updated);
   };
 
-  const handleDeleteDraft = async (id: string) => {
-    try {
-      await fetch(`${API_BASE}/api/drafts/${id}`, { method: 'DELETE' });
-      fetchDrafts();
-      if (activeDraftId === id) {
-        setGeneratedPosts(null);
-        setActiveDraftId(null);
-      }
-    } catch (err) {
-      console.error('Failed to delete draft:', err);
+  const handleDeleteDraft = (id: string) => {
+    const updated = drafts.filter(d => d.id !== id);
+    setDrafts(updated);
+    saveDrafts(updated);
+    if (activeDraftId === id) {
+      setGeneratedPosts(null);
+      setActiveDraftId(null);
     }
   };
 
