@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": "5fb1b9e0-7288-4080-af7d-23473fe933ec",
+    "content": {
+      "linkedin": "Test post"
+    },
+    "platforms": [
+      "linkedin"
+    ],
+    "description": "test",
+    "images": [],
+    "createdAt": "2026-06-24T05:37:06.387Z",
+    "updatedAt": "2026-06-24T05:37:06.387Z"
+  }
+]
