@@ -46,26 +46,44 @@ export default function UploadForm({ onGenerate, loading }: UploadFormProps) {
     onGenerate(description, platforms, files);
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('dragover');
+    const dropped = Array.from(e.dataTransfer.files).filter(f =>
+      f.type.startsWith('image/') || f.type.startsWith('video/')
+    );
+    if (dropped.length === 0) return;
+    setFiles(prev => [...prev, ...dropped]);
+    dropped.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => setPreviews(prev => [...prev, reader.result as string]);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.add('dragover');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('dragover');
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} onDrop={(e) => e.preventDefault()}>
       <h2 className="section-title">Create Post</h2>
 
       <div
         className="upload-area"
         onClick={() => fileInputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('dragover'); }}
-        onDragLeave={(e) => e.currentTarget.classList.remove('dragover')}
-        onDrop={(e) => {
-          e.preventDefault();
-          e.currentTarget.classList.remove('dragover');
-          const dropped = Array.from(e.dataTransfer.files);
-          setFiles(prev => [...prev, ...dropped]);
-          dropped.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = () => setPreviews(prev => [...prev, reader.result as string]);
-            reader.readAsDataURL(file);
-          });
-        }}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <p>Click or drag images/videos here</p>
         <input
