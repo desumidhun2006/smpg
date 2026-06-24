@@ -9,7 +9,7 @@ interface UploadFormProps {
 
 export default function UploadForm({ onGenerate, loading }: UploadFormProps) {
   const [description, setDescription] = useState('');
-  const [platforms, setPlatforms] = useState<string[]>(['linkedin']);
+  const [platforms, setPlatforms] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,14 +130,14 @@ export default function UploadForm({ onGenerate, loading }: UploadFormProps) {
 
       <div className="platform-selector">
         {['linkedin', 'instagram', 'facebook'].map(platform => (
-          <label key={platform} className="platform-checkbox">
-            <input
-              type="checkbox"
-              checked={platforms.includes(platform)}
-              onChange={() => togglePlatform(platform)}
-            />
-            <span style={{ textTransform: 'capitalize' }}>{platform}</span>
-          </label>
+          <button
+            key={platform}
+            type="button"
+            className={`platform-btn ${platforms.includes(platform) ? 'active' : ''}`}
+            onClick={() => togglePlatform(platform)}
+          >
+            {platform.charAt(0).toUpperCase() + platform.slice(1)}
+          </button>
         ))}
       </div>
 
