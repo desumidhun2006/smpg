@@ -1,56 +1,72 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const OpenAI = require('openai');
 const { buildPrompt } = require('./prompts');
 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const OLLAMA_BASE = process.env.OLLAMA_URL || 'http://localhost:11434';
 
-const nvidia = NVIDIA_API_KEY && NVIDIA_API_KEY !== 'your-key-here'
+const gemini = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const nvidia = NVIDIA_API_KEY
   ? new OpenAI({
       apiKey: NVIDIA_API_KEY,
       baseURL: 'https://integrate.api.nvidia.com/v1',
     })
   : null;
 
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const NVIDIA_VISION_MODEL = 'meta/llama-3.2-90b-vision-instruct';
 
 async function generatePost(description, platforms, imageBase64 = null) {
-  if (platforms.length > 1) {
-    const prompt = buildPrompt(platforms, description);
-    console.log(`[NVIDIA] Generating universal post for: ${platforms.join(', ')} (image: ${!!imageBase64})`);
+  const prompt = buildPrompt(platforms, description);
+  const isMulti = platforms.length > 1;
+  const label = isMulti ? `universal for: ${platforms.join(', ')}` : platforms[0];
+  console.log(`[AI] Generating ${label} (image: ${!!imageBase64})`);
 
-    if (nvidia) {
-      try {
-        const content = await generateWithNvidia(prompt, imageBase64);
-        const result = {};
-        for (const p of platforms) result[p] = content;
-        return result;
-      } catch (err) {
-        console.error(`[NVIDIA] Failed: ${err.message}`);
-        throw new Error(`NVIDIA generation failed: ${err.message}`);
-      }
+  if (gemini) {
+    try {
+      const content = await generateWithGemini(prompt, imageBase64);
+      console.log(`[Gemini] Success`);
+      const result = {};
+      for (const p of platforms) result[p] = content;
+      return result;
+    } catch (err) {
+      console.error(`[Gemini] Failed: ${err.message}`);
     }
-
-    const content = await generateWithOllama(prompt);
-    const result = {};
-    for (const p of platforms) result[p] = content;
-    return result;
   }
 
-  const prompt = buildPrompt(platforms, description);
-  console.log(`[NVIDIA] Generating for ${platforms[0]} (image: ${!!imageBase64})`);
-
-  if (nvidia) {
+  if (nvidia && imageBase64) {
     try {
       const content = await generateWithNvidia(prompt, imageBase64);
-      return { [platforms[0]]: content };
+      console.log(`[NVIDIA] Success (vision fallback)`);
+      const result = {};
+      for (const p of platforms) result[p] = content;
+      return result;
     } catch (err) {
       console.error(`[NVIDIA] Failed: ${err.message}`);
-      throw new Error(`NVIDIA generation failed: ${err.message}`);
     }
   }
 
-  const content = await generateWithOllama(prompt);
-  return { [platforms[0]]: content };
+  throw new Error('All AI providers failed');
+}
+
+async function generateWithGemini(prompt, imageBase64 = null) {
+  const model = gemini.getGenerativeModel({ model: GEMINI_MODEL });
+
+  const parts = [{ text: prompt }];
+
+  if (imageBase64) {
+    parts.push({
+      inlineData: {
+        mimeType: 'image/jpeg',
+        data: imageBase64,
+      },
+    });
+  }
+
+  const result = await model.generateContent(parts);
+  const response = result.response;
+  return response.text();
 }
 
 async function generateWithNvidia(prompt, imageBase64 = null) {
@@ -81,30 +97,7 @@ async function generateWithNvidia(prompt, imageBase64 = null) {
     throw new Error('No response from NVIDIA API');
   }
 
-  console.log(`[NVIDIA] Response model: ${response.model}`);
   return response.choices[0].message.content;
-}
-
-async function generateWithOllama(prompt) {
-  const body = {
-    model: 'llama3.2:1b',
-    prompt,
-    stream: false,
-  };
-
-  const response = await fetch(`${OLLAMA_BASE}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    throw new Error(data.error || `Ollama error: ${response.status}`);
-  }
-
-  return data.response;
 }
 
 module.exports = { generatePost };
