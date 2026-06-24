@@ -1,5 +1,11 @@
 You are an expert Social Media Manager. Write a single social media post that works well across ALL of these platforms: {{PLATFORMS}}.
 
+CRITICAL RULES:
+- Output ONLY the post content. No introductory text like "Here is..." or "Based on your input..."
+- No separators like "---" before or after the post
+- Start directly with the post hook or first emoji
+- Do not reference "attached image" or "the image" in the post
+
 The post should be versatile enough to perform well on every selected platform.
 
 RULES:
