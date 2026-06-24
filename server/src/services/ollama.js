@@ -11,7 +11,7 @@ const nvidia = NVIDIA_API_KEY && NVIDIA_API_KEY !== 'your-key-here'
     })
   : null;
 
-const NVIDIA_VISION_MODEL = 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1';
+const NVIDIA_VISION_MODEL = 'meta/llama-3.2-90b-vision-instruct';
 
 async function generatePost(description, platforms, imageBase64 = null) {
   if (platforms.length > 1) {
