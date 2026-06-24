@@ -1,4 +1,3 @@
-require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
@@ -12,15 +11,16 @@ function loadPromptTemplate(platform) {
   return fs.readFileSync(filePath, 'utf8');
 }
 
-function buildPrompt(platform, description) {
-  const template = loadPromptTemplate(platform);
+function buildPrompt(platforms, description) {
+  if (platforms.length > 1) {
+    const template = loadPromptTemplate('universal');
+    return template
+      .replace('{{PLATFORMS}}', platforms.join(', '))
+      .replace('{{DESCRIPTION}}', description);
+  }
+
+  const template = loadPromptTemplate(platforms[0]);
   return template.replace('{{DESCRIPTION}}', description);
 }
 
-function getAvailablePlatforms() {
-  return fs.readdirSync(PROMPTS_DIR)
-    .filter(f => f.endsWith('.txt'))
-    .map(f => f.replace('.txt', ''));
-}
-
-module.exports = { buildPrompt, getAvailablePlatforms, loadPromptTemplate };
+module.exports = { buildPrompt };

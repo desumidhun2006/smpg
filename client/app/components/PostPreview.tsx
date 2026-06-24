@@ -11,54 +11,66 @@ interface PostPreviewProps {
 }
 
 export default function PostPreview({ posts, onSaveDraft, onPost, description, onClear }: PostPreviewProps) {
-  const [activePlatform, setActivePlatform] = useState<string>(Object.keys(posts)[0] || 'linkedin');
   const [editing, setEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState<Record<string, string>>({...posts});
+  const [editedContent, setEditedContent] = useState<string>(Object.values(posts)[0] || '');
 
   const platforms = Object.keys(posts);
+  const isUniversal = platforms.length > 1 && new Set(Object.values(posts)).size === 1;
 
   const handleSaveDraft = () => {
-    onSaveDraft(editedContent, platforms, description);
+    const content: Record<string, string> = {};
+    for (const p of platforms) content[p] = editedContent;
+    onSaveDraft(content, platforms, description);
     onClear();
   };
 
   const handlePost = () => {
-    onPost(editedContent, platforms, description);
+    const content: Record<string, string> = {};
+    for (const p of platforms) content[p] = editedContent;
+    onPost(content, platforms, description);
     onClear();
   };
-
-  const content = editing ? (editedContent[activePlatform] || '') : (posts[activePlatform] || '');
 
   return (
     <div className="post-preview">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className="section-title" style={{ margin: 0 }}>Generated Posts</h2>
+        <h2 className="section-title" style={{ margin: 0 }}>Generated Post</h2>
         <button className="btn btn-secondary" onClick={onClear} style={{ fontSize: 12 }}>
           New Post
         </button>
       </div>
 
-      <div className="platform-tabs">
-        {platforms.map(platform => (
-          <button
-            key={platform}
-            className={`platform-tab ${activePlatform === platform ? 'active' : ''}`}
-            onClick={() => setActivePlatform(platform)}
-          >
-            {platform.charAt(0).toUpperCase() + platform.slice(1)}
-          </button>
-        ))}
-      </div>
+      {isUniversal && (
+        <div className="draft-card-platforms" style={{ margin: '8px 0 16px' }}>
+          <span style={{ fontSize: 12, color: '#6b7280', marginRight: 8 }}>Posting to:</span>
+          {platforms.map(p => (
+            <span key={p} className="platform-badge">{p}</span>
+          ))}
+        </div>
+      )}
+
+      {!isUniversal && (
+        <div className="platform-tabs">
+          {platforms.map(platform => (
+            <button
+              key={platform}
+              className="platform-tab active"
+            >
+              {platform.charAt(0).toUpperCase() + platform.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="post-content">
         {editing ? (
           <textarea
-            value={editedContent[activePlatform] || ''}
-            onChange={(e) => setEditedContent(prev => ({ ...prev, [activePlatform]: e.target.value }))}
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
             style={{ minHeight: 200 }}
           />
         ) : (
-          <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
+          <div style={{ whiteSpace: 'pre-wrap' }}>{editedContent}</div>
         )}
       </div>
 

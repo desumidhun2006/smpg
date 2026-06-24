@@ -14,56 +14,65 @@ const nvidia = NVIDIA_API_KEY && NVIDIA_API_KEY !== 'your-key-here'
 const NVIDIA_VISION_MODEL = 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1';
 
 async function generatePost(description, platforms, imageBase64 = null) {
-  const results = {};
-
-  for (const platform of platforms) {
-    const prompt = buildPrompt(platform, description);
+  if (platforms.length > 1) {
+    const prompt = buildPrompt(platforms, description);
+    console.log(`[NVIDIA] Generating universal post for: ${platforms.join(', ')} (image: ${!!imageBase64})`);
 
     if (nvidia) {
-      console.log(`[NVIDIA] Generating for ${platform} (image: ${!!imageBase64})`);
       try {
-        results[platform] = await generateWithNvidia(prompt, imageBase64);
-        continue;
+        const content = await generateWithNvidia(prompt, imageBase64);
+        const result = {};
+        for (const p of platforms) result[p] = content;
+        return result;
       } catch (err) {
-        console.error(`[NVIDIA] Failed for ${platform}: ${err.message}`);
+        console.error(`[NVIDIA] Failed: ${err.message}`);
         throw new Error(`NVIDIA generation failed: ${err.message}`);
       }
     }
 
-    results[platform] = await generateWithOllama(prompt);
+    const content = await generateWithOllama(prompt);
+    const result = {};
+    for (const p of platforms) result[p] = content;
+    return result;
   }
 
-  return results;
+  const prompt = buildPrompt(platforms, description);
+  console.log(`[NVIDIA] Generating for ${platforms[0]} (image: ${!!imageBase64})`);
+
+  if (nvidia) {
+    try {
+      const content = await generateWithNvidia(prompt, imageBase64);
+      return { [platforms[0]]: content };
+    } catch (err) {
+      console.error(`[NVIDIA] Failed: ${err.message}`);
+      throw new Error(`NVIDIA generation failed: ${err.message}`);
+    }
+  }
+
+  const content = await generateWithOllama(prompt);
+  return { [platforms[0]]: content };
 }
 
 async function generateWithNvidia(prompt, imageBase64 = null) {
-  const messages = [
-    {
-      role: 'system',
-      content: 'You are an expert social media content writer. You create engaging, platform-appropriate posts. You always follow the user instructions precisely. You never refuse to write content — your job is to create marketing and social media posts.',
-    },
-  ];
+  let userContent;
 
   if (imageBase64) {
-    messages.push({
-      role: 'user',
-      content: [
-        { type: 'text', text: prompt },
-        {
-          type: 'image_url',
-          image_url: {
-            url: `data:image/jpeg;base64,${imageBase64}`,
-          },
+    userContent = [
+      { type: 'text', text: prompt },
+      {
+        type: 'image_url',
+        image_url: {
+          url: `data:image/jpeg;base64,${imageBase64}`,
         },
-      ],
-    });
+      },
+    ];
   } else {
-    messages.push({ role: 'user', content: prompt });
+    userContent = prompt;
   }
 
   const response = await nvidia.chat.completions.create({
     model: NVIDIA_VISION_MODEL,
-    messages,
+    messages: [{ role: 'user', content: userContent }],
     max_tokens: 1024,
     temperature: 0.7,
   });
