@@ -128,13 +128,23 @@ export default function UploadForm({ onGenerate, loading }: UploadFormProps) {
         />
       </div>
 
-      <div className="platform-selector">
+      <div style={{ display: 'flex', gap: 12, margin: '16px 0' }}>
         {['linkedin', 'instagram', 'facebook'].map(platform => (
           <button
             key={platform}
             type="button"
-            className={`platform-btn ${platforms.includes(platform) ? 'active' : ''}`}
             onClick={() => togglePlatform(platform)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: platforms.includes(platform) ? '2px solid #3b82f6' : '2px solid #e5e7eb',
+              background: platforms.includes(platform) ? '#3b82f6' : 'white',
+              color: platforms.includes(platform) ? 'white' : '#374151',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 500,
+              transition: 'all 0.2s',
+            }}
           >
             {platform.charAt(0).toUpperCase() + platform.slice(1)}
           </button>
