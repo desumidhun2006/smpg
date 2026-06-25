@@ -8,9 +8,11 @@ interface PostPreviewProps {
   onPost: (content: Record<string, string>, platforms: string[], description: string) => void;
   description: string;
   onClear: () => void;
+  linkedinConnected?: boolean;
+  posting?: boolean;
 }
 
-export default function PostPreview({ posts, onSaveDraft, onPost, description, onClear }: PostPreviewProps) {
+export default function PostPreview({ posts, onSaveDraft, onPost, description, onClear, linkedinConnected, posting }: PostPreviewProps) {
   const [editing, setEditing] = useState(false);
   const [editedContent, setEditedContent] = useState<string>(Object.values(posts)[0] || '');
 
@@ -28,8 +30,9 @@ export default function PostPreview({ posts, onSaveDraft, onPost, description, o
     const content: Record<string, string> = {};
     for (const p of platforms) content[p] = editedContent;
     onPost(content, platforms, description);
-    onClear();
   };
+
+  const needsLinkedIn = platforms.includes('linkedin') && !linkedinConnected;
 
   return (
     <div className="post-preview">
@@ -74,6 +77,12 @@ export default function PostPreview({ posts, onSaveDraft, onPost, description, o
         )}
       </div>
 
+      {needsLinkedIn && (
+        <div style={{ padding: 12, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, marginBottom: 16, color: '#1d4ed8', fontSize: 14 }}>
+          Connect your LinkedIn account in the sidebar to post here.
+        </div>
+      )}
+
       <div className="btn-group">
         <button className="btn btn-secondary" onClick={() => setEditing(!editing)}>
           {editing ? 'Done Editing' : 'Edit'}
@@ -81,8 +90,12 @@ export default function PostPreview({ posts, onSaveDraft, onPost, description, o
         <button className="btn btn-primary" onClick={handleSaveDraft}>
           Save Draft
         </button>
-        <button className="btn btn-success" onClick={handlePost}>
-          Post Now
+        <button
+          className="btn btn-success"
+          onClick={handlePost}
+          disabled={posting || needsLinkedIn}
+        >
+          {posting ? 'Posting...' : needsLinkedIn ? 'Connect LinkedIn First' : 'Post Now'}
         </button>
       </div>
     </div>

@@ -23,6 +23,12 @@ interface HistoryItem {
   postedAt: string;
 }
 
+interface LinkedInUser {
+  sub: string;
+  name: string;
+  picture: string;
+}
+
 function loadDrafts(): Draft[] {
   if (typeof window === 'undefined') return [];
   try { return JSON.parse(localStorage.getItem('smpg_drafts') || '[]'); } catch { return []; }
@@ -50,11 +56,46 @@ export default function Home() {
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkedinUser, setLinkedinUser] = useState<LinkedInUser | null>(null);
+  const [linkedinToken, setLinkedinToken] = useState<string | null>(null);
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     setDrafts(loadDrafts());
     setHistory(loadHistory());
+
+    const savedToken = localStorage.getItem('smpg_linkedin_token');
+    const savedUser = localStorage.getItem('smpg_linkedin_user');
+    if (savedToken && savedUser) {
+      setLinkedinToken(savedToken);
+      setLinkedinUser(JSON.parse(savedUser));
+    }
+
+    const handler = (e: MessageEvent) => {
+      if (e.data && e.data.accessToken) {
+        setLinkedinToken(e.data.accessToken);
+        setLinkedinUser(e.data.user);
+        localStorage.setItem('smpg_linkedin_token', e.data.accessToken);
+        localStorage.setItem('smpg_linkedin_user', JSON.stringify(e.data.user));
+      }
+      if (e.data && e.data.error) {
+        setError('LinkedIn login failed: ' + e.data.error);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
   }, []);
+
+  const handleLinkedInLogin = () => {
+    window.open(`${API_BASE}/api/linkedin/auth`, 'linkedin-auth', 'width=600,height=700');
+  };
+
+  const handleLinkedInLogout = () => {
+    setLinkedinToken(null);
+    setLinkedinUser(null);
+    localStorage.removeItem('smpg_linkedin_token');
+    localStorage.removeItem('smpg_linkedin_user');
+  };
 
   const handleGenerate = async (desc: string, platforms: string[], files: File[]) => {
     setLoading(true);
@@ -99,7 +140,34 @@ export default function Home() {
     saveDrafts(updated);
   };
 
-  const handlePost = (content: Record<string, string>, platforms: string[], desc: string) => {
+  const handlePost = async (content: Record<string, string>, platforms: string[], desc: string) => {
+    if (platforms.includes('linkedin')) {
+      if (!linkedinToken) {
+        setError('Please connect LinkedIn first');
+        return;
+      }
+
+      setPosting(true);
+      try {
+        const postText = Object.values(content)[0];
+        const res = await fetch(`${API_BASE}/api/linkedin/post`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: postText, accessToken: linkedinToken }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'LinkedIn post failed');
+        }
+      } catch (err: any) {
+        setError('LinkedIn post failed: ' + err.message);
+        setPosting(false);
+        return;
+      }
+      setPosting(false);
+    }
+
     const item: HistoryItem = {
       id: crypto.randomUUID(),
       content,
@@ -152,12 +220,16 @@ export default function Home() {
         onDeleteDraft={handleDeleteDraft}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
+        linkedinUser={linkedinUser}
+        onLinkedInLogin={handleLinkedInLogin}
+        onLinkedInLogout={handleLinkedInLogout}
       />
 
       <main className="main-content">
         {error && (
-          <div style={{ padding: 12, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, marginBottom: 16, color: '#dc2626', fontSize: 14 }}>
-            {error}
+          <div style={{ padding: 12, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, marginBottom: 16, color: '#dc2626', fontSize: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{error}</span>
+            <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 16 }}>x</button>
           </div>
         )}
 
@@ -175,6 +247,8 @@ export default function Home() {
             onPost={handlePost}
             description={description}
             onClear={handleClear}
+            linkedinConnected={!!linkedinToken}
+            posting={posting}
           />
         ) : (
           !loading && <UploadForm onGenerate={handleGenerate} loading={loading} />
