@@ -59,6 +59,7 @@ export default function Home() {
   const [linkedinUser, setLinkedinUser] = useState<LinkedInUser | null>(null);
   const [linkedinToken, setLinkedinToken] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
+  const [currentImages, setCurrentImages] = useState<string[]>([]);
 
   useEffect(() => {
     setDrafts(loadDrafts());
@@ -101,6 +102,17 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setDescription(desc);
+
+    const base64Images: string[] = [];
+    for (const file of files) {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      base64Images.push(base64);
+    }
+    setCurrentImages(base64Images);
 
     try {
       const formData = new FormData();
@@ -153,7 +165,11 @@ export default function Home() {
         const res = await fetch(`${API_BASE}/api/linkedin/post`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: postText, accessToken: linkedinToken }),
+          body: JSON.stringify({
+            content: postText,
+            accessToken: linkedinToken,
+            images: currentImages,
+          }),
         });
 
         if (!res.ok) {
@@ -208,6 +224,7 @@ export default function Home() {
     setGeneratedPosts(null);
     setDescription('');
     setActiveDraftId(null);
+    setCurrentImages([]);
   };
 
   return (
