@@ -10,14 +10,6 @@ interface Draft {
   createdAt: string;
 }
 
-interface HistoryItem {
-  id: string;
-  content: Record<string, string> | string;
-  platforms: string[];
-  description: string;
-  postedAt: string;
-}
-
 interface LinkedInUser {
   sub: string;
   name: string;
@@ -26,7 +18,6 @@ interface LinkedInUser {
 
 interface SidebarProps {
   drafts: Draft[];
-  history: HistoryItem[];
   activeDraftId: string | null;
   onSelectDraft: (draft: Draft) => void;
   onDeleteDraft: (id: string) => void;
@@ -37,7 +28,7 @@ interface SidebarProps {
   onLinkedInLogout: () => void;
 }
 
-export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft, onDeleteDraft, isOpen, onToggle, linkedinUser, onLinkedInLogin, onLinkedInLogout }: SidebarProps) {
+export default function Sidebar({ drafts, activeDraftId, onSelectDraft, onDeleteDraft, isOpen, onToggle, linkedinUser, onLinkedInLogin, onLinkedInLogout }: SidebarProps) {
   return (
     <>
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -47,18 +38,36 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
 
         <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
           {linkedinUser ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'relative' }}>
+              <a
+                href="https://www.linkedin.com/feed/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 12px', borderRadius: 6,
+                  border: '1px solid #0a66c2', background: 'white',
+                  color: '#0a66c2', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                  textDecoration: 'none', width: '100%',
+                }}
+              >
                 {linkedinUser.picture && (
-                  <img src={linkedinUser.picture} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+                  <img src={linkedinUser.picture} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />
                 )}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{linkedinUser.name}</div>
-                  <div style={{ fontSize: 11, color: '#16a34a' }}>LinkedIn connected</div>
-                </div>
-              </div>
-              <button onClick={onLinkedInLogout} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: 11 }}>
-                Disconnect
+                <span>{linkedinUser.name}</span>
+              </a>
+              <button
+                onClick={(e) => { e.stopPropagation(); onLinkedInLogout(); }}
+                title="Disconnect LinkedIn"
+                style={{
+                  position: 'absolute', top: -4, right: -4,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: '#ef4444', color: 'white', border: 'none',
+                  cursor: 'pointer', fontSize: 10, lineHeight: 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                x
               </button>
             </div>
           ) : (
@@ -89,23 +98,6 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
               onClick={() => onSelectDraft(draft)}
               onDelete={() => onDeleteDraft(draft.id)}
               type="draft"
-            />
-          ))}
-        </div>
-
-        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
-          <div className="sidebar-section-title">Posted ({history.length})</div>
-          {history.length === 0 && (
-            <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
-              No posts yet
-            </div>
-          )}
-          {history.map(item => (
-            <DraftCard
-              key={item.id}
-              draft={item}
-              onClick={() => {}}
-              type="history"
             />
           ))}
         </div>

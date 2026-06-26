@@ -274,7 +274,6 @@ export default function Home() {
     <div className="app-container">
       <Sidebar
         drafts={drafts}
-        history={history}
         activeDraftId={activeDraftId}
         onSelectDraft={handleSelectDraft}
         onDeleteDraft={handleDeleteDraft}
