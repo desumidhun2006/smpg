@@ -14,6 +14,7 @@ interface LinkedInUser {
   sub: string;
   name: string;
   picture: string;
+  profileUrl: string;
 }
 
 interface SidebarProps {
@@ -40,7 +41,7 @@ export default function Sidebar({ drafts, activeDraftId, onSelectDraft, onDelete
           {linkedinUser ? (
             <div style={{ position: 'relative' }}>
               <a
-                href="https://www.linkedin.com/feed/"
+                href={linkedinUser.profileUrl || 'https://www.linkedin.com/feed/'}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

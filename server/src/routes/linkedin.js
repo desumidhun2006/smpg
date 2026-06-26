@@ -45,6 +45,17 @@ router.get('/callback', async (req, res) => {
     });
     const profile = await profileRes.json();
 
+    let profileUrl = 'https://www.linkedin.com/feed/';
+    try {
+      const meRes = await fetch('https://api.linkedin.com/v2/me?projection=(id,vanityName)', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      const meData = await meRes.json();
+      if (meData.vanityName) {
+        profileUrl = `https://www.linkedin.com/in/${meData.vanityName}/recent-activity/all/`;
+      }
+    } catch {}
+
     const data = {
       accessToken: tokenData.access_token,
       expiresIn: tokenData.expires_in,
@@ -52,6 +63,7 @@ router.get('/callback', async (req, res) => {
         sub: profile.sub,
         name: profile.name,
         picture: profile.picture,
+        profileUrl,
       },
     };
 

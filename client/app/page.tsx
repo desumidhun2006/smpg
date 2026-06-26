@@ -28,6 +28,7 @@ interface LinkedInUser {
   sub: string;
   name: string;
   picture: string;
+  profileUrl: string;
 }
 
 function loadDrafts(): Draft[] {
