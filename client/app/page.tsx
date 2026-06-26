@@ -63,15 +63,23 @@ export default function Home() {
   const [currentImages, setCurrentImages] = useState<string[]>([]);
 
   useEffect(() => {
+    const loadedHistory = loadHistory();
     setDrafts(loadDrafts());
-    setHistory(loadHistory());
 
     const savedToken = localStorage.getItem('smpg_linkedin_token');
     const savedUser = localStorage.getItem('smpg_linkedin_user');
     if (savedToken && savedUser) {
       setLinkedinToken(savedToken);
       setLinkedinUser(JSON.parse(savedUser));
-      verifyLinkedInPosts(loadHistory(), savedToken);
+      verifyLinkedInPosts(loadedHistory, savedToken);
+    } else {
+      const cleaned = loadedHistory.filter(i => i.postUrl);
+      if (cleaned.length !== loadedHistory.length) {
+        setHistory(cleaned);
+        saveHistory(cleaned);
+      } else {
+        setHistory(loadedHistory);
+      }
     }
 
     const handler = (e: MessageEvent) => {
@@ -92,9 +100,10 @@ export default function Home() {
 
   const verifyLinkedInPosts = async (items: HistoryItem[], token: string) => {
     const linkedinPosts = items.filter(i => i.postUrl && i.platforms.includes('linkedin'));
-    if (linkedinPosts.length === 0) return;
+    const nonLinkedin = items.filter(i => !i.postUrl || !i.platforms.includes('linkedin'));
 
-    const verified: string[] = [];
+    const toKeep: HistoryItem[] = [...nonLinkedin];
+
     const checks = linkedinPosts.map(async (item) => {
       try {
         const res = await fetch(`${API_BASE}/api/linkedin/check-post`, {
@@ -103,20 +112,16 @@ export default function Home() {
           body: JSON.stringify({ postUrl: item.postUrl, accessToken: token }),
         });
         const data = await res.json();
-        if (data.exists) verified.push(item.id);
+        if (data.exists) toKeep.push(item);
       } catch {
-        verified.push(item.id);
+        toKeep.push(item);
       }
     });
 
     await Promise.all(checks);
 
-    const toRemove = linkedinPosts.filter(i => !verified.includes(i.id));
-    if (toRemove.length > 0) {
-      const updated = items.filter(i => !toRemove.find(r => r.id === i.id));
-      setHistory(updated);
-      saveHistory(updated);
-    }
+    setHistory(toKeep);
+    saveHistory(toKeep);
   };
 
   const handleLinkedInLogin = () => {

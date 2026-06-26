@@ -190,15 +190,28 @@ router.post('/check-post', async (req, res) => {
 
     const postIdMatch = postUrl.match(/update\/(urn:li:.+)/);
     if (!postIdMatch) {
-      return res.json({ exists: true });
+      return res.json({ exists: false });
     }
 
     const postId = postIdMatch[1];
-    const checkRes = await fetch(`https://api.linkedin.com/v2/ugcPosts/${encodeURIComponent(postId)}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
 
-    res.json({ exists: checkRes.ok });
+    const checkRes = await fetch(
+      `https://api.linkedin.com/v2/ugcPosts?q=condensedMultiParticipantQuery&ids=${encodeURIComponent(postId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+      }
+    );
+
+    if (checkRes.ok) {
+      const data = await checkRes.json();
+      const results = data.results || {};
+      res.json({ exists: !!results[postId] });
+    } else {
+      res.json({ exists: false });
+    }
   } catch {
     res.json({ exists: true });
   }
