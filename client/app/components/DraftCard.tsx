@@ -8,6 +8,7 @@ interface DraftCardProps {
     description: string;
     createdAt?: string;
     postedAt?: string;
+    postUrl?: string;
   };
   isActive?: boolean;
   onClick: () => void;
@@ -32,6 +33,23 @@ export default function DraftCard({ draft, isActive, onClick, onDelete, type = '
               <span key={p} className="platform-badge">{p}</span>
             ))}
           </div>
+          {type === 'history' && draft.postUrl && (
+            <a
+              href={draft.postUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                display: 'inline-block',
+                marginTop: 4,
+                fontSize: 12,
+                color: '#0a66c2',
+                textDecoration: 'none',
+              }}
+            >
+              View on LinkedIn
+            </a>
+          )}
         </div>
         {onDelete && (
           <button

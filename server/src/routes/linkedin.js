@@ -165,9 +165,42 @@ router.post('/post', async (req, res) => {
       return res.status(postRes.status).json({ error: postData.message || 'LinkedIn post failed' });
     }
 
-    res.json({ success: true, postId: postData.id });
+    res.json({ success: true, postId: postData.id, postUrl: `https://www.linkedin.com/feed/update/${postData.id}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/check-post', async (req, res) => {
+  const { postUrl, accessToken } = req.body;
+
+  if (!postUrl || !accessToken) {
+    return res.json({ exists: true });
+  }
+
+  try {
+    const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const profile = await profileRes.json();
+
+    if (!profile.sub) {
+      return res.json({ exists: true });
+    }
+
+    const postIdMatch = postUrl.match(/update\/(urn:li:.+)/);
+    if (!postIdMatch) {
+      return res.json({ exists: true });
+    }
+
+    const postId = postIdMatch[1];
+    const checkRes = await fetch(`https://api.linkedin.com/v2/ugcPosts/${encodeURIComponent(postId)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    res.json({ exists: checkRes.ok });
+  } catch {
+    res.json({ exists: true });
   }
 });
 

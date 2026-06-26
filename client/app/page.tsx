@@ -21,6 +21,7 @@ interface HistoryItem {
   platforms: string[];
   description: string;
   postedAt: string;
+  postUrl?: string;
 }
 
 interface LinkedInUser {
@@ -70,6 +71,7 @@ export default function Home() {
     if (savedToken && savedUser) {
       setLinkedinToken(savedToken);
       setLinkedinUser(JSON.parse(savedUser));
+      verifyLinkedInPosts(loadHistory(), savedToken);
     }
 
     const handler = (e: MessageEvent) => {
@@ -78,6 +80,7 @@ export default function Home() {
         setLinkedinUser(e.data.user);
         localStorage.setItem('smpg_linkedin_token', e.data.accessToken);
         localStorage.setItem('smpg_linkedin_user', JSON.stringify(e.data.user));
+        verifyLinkedInPosts(loadHistory(), e.data.accessToken);
       }
       if (e.data && e.data.error) {
         setError('LinkedIn login failed: ' + e.data.error);
@@ -86,6 +89,35 @@ export default function Home() {
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, []);
+
+  const verifyLinkedInPosts = async (items: HistoryItem[], token: string) => {
+    const linkedinPosts = items.filter(i => i.postUrl && i.platforms.includes('linkedin'));
+    if (linkedinPosts.length === 0) return;
+
+    const verified: string[] = [];
+    const checks = linkedinPosts.map(async (item) => {
+      try {
+        const res = await fetch(`${API_BASE}/api/linkedin/check-post`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postUrl: item.postUrl, accessToken: token }),
+        });
+        const data = await res.json();
+        if (data.exists) verified.push(item.id);
+      } catch {
+        verified.push(item.id);
+      }
+    });
+
+    await Promise.all(checks);
+
+    const toRemove = linkedinPosts.filter(i => !verified.includes(i.id));
+    if (toRemove.length > 0) {
+      const updated = items.filter(i => !toRemove.find(r => r.id === i.id));
+      setHistory(updated);
+      saveHistory(updated);
+    }
+  };
 
   const handleLinkedInLogin = () => {
     window.open(`${API_BASE}/api/linkedin/auth`, 'linkedin-auth', 'width=600,height=700');
@@ -153,6 +185,8 @@ export default function Home() {
   };
 
   const handlePost = async (content: Record<string, string>, platforms: string[], desc: string) => {
+    let postUrl: string | undefined;
+
     if (platforms.includes('linkedin')) {
       if (!linkedinToken) {
         setError('Please connect LinkedIn first');
@@ -176,6 +210,9 @@ export default function Home() {
           const errData = await res.json();
           throw new Error(errData.error || 'LinkedIn post failed');
         }
+
+        const result = await res.json();
+        postUrl = result.postUrl;
       } catch (err: any) {
         setError('LinkedIn post failed: ' + err.message);
         setPosting(false);
@@ -190,6 +227,7 @@ export default function Home() {
       platforms,
       description: desc,
       postedAt: new Date().toISOString(),
+      postUrl,
     };
     const updated = [item, ...history];
     setHistory(updated);
