@@ -53,7 +53,7 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
           {linkedinUser ? (
             <div style={{ position: 'relative' }}>
               <a
-                href={linkedinUser.profileUrl || 'https://www.linkedin.com/feed/'}
+                href="https://www.linkedin.com/feed/"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
