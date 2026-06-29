@@ -158,45 +158,6 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
             />
           ))}
         </div>
-
-        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
-          <div className="sidebar-section-title">LinkedIn ({linkedinPosts.length})</div>
-          {linkedinPosts.length === 0 && (
-            <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
-              {linkedinUser ? 'No posts yet' : 'Connect LinkedIn to see posts'}
-            </div>
-          )}
-          {linkedinPosts.map(item => (
-            <a
-              key={item.id}
-              href={item.postUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              <DraftCard draft={item} onClick={() => {}} type="history" />
-            </a>
-          ))}
-        </div>
-
-        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
-          <div className="sidebar-section-title">Instagram ({instagramPosts.length})</div>
-          {instagramPosts.length === 0 && (
-            <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
-              {instagramUser ? 'No posts yet' : 'Connect Instagram to see posts'}
-            </div>
-          )}
-          {instagramPosts.map(item => (
-            <DraftCard key={item.id} draft={item} onClick={() => {}} type="history" />
-          ))}
-        </div>
-
-        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
-          <div className="sidebar-section-title">Facebook</div>
-          <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
-            Coming soon
-          </div>
-        </div>
       </div>
 
       <button className="mobile-sidebar-toggle" onClick={onToggle}>
