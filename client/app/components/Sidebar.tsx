@@ -54,6 +54,22 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
   const linkedinPosts = history.filter(i => i.platforms.includes('linkedin'));
   const instagramPosts = history.filter(i => i.platforms.includes('instagram'));
 
+  const btnStyle = (color: string, connected: boolean) => ({
+    width: '100%' as const,
+    padding: '6px 10px',
+    borderRadius: 6,
+    border: `1px solid ${color}`,
+    background: connected ? 'white' : color,
+    color: connected ? color : 'white',
+    cursor: 'pointer' as const,
+    fontSize: 12,
+    fontWeight: 500 as const,
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 6,
+  });
+
   return (
     <>
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -61,34 +77,27 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
           SMPG
         </div>
 
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {linkedinUser ? (
-            <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <a
                 href="https://www.linkedin.com/feed/"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 12px', borderRadius: 6,
-                  border: '1px solid #0a66c2', background: 'white',
-                  color: '#0a66c2', cursor: 'pointer', fontSize: 13, fontWeight: 500,
-                  textDecoration: 'none', width: '100%',
-                }}
+                style={{ ...btnStyle('#0a66c2', true), flex: 1, textDecoration: 'none' }}
               >
                 {linkedinUser.picture && (
-                  <img src={linkedinUser.picture} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />
+                  <img src={linkedinUser.picture} alt="" style={{ width: 16, height: 16, borderRadius: '50%' }} />
                 )}
                 <span>{linkedinUser.name}</span>
               </a>
               <button
-                onClick={(e) => { e.stopPropagation(); onLinkedInLogout(); }}
-                title="Disconnect LinkedIn"
+                onClick={onLinkedInLogout}
+                title="Disconnect"
                 style={{
-                  position: 'absolute', top: -4, right: -4,
-                  width: 18, height: 18, borderRadius: '50%',
+                  width: 22, height: 22, borderRadius: '50%',
                   background: '#ef4444', color: 'white', border: 'none',
-                  cursor: 'pointer', fontSize: 10, lineHeight: 1,
+                  cursor: 'pointer', fontSize: 10, flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
@@ -96,16 +105,39 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
               </button>
             </div>
           ) : (
-            <button onClick={onLinkedInLogin} style={{
-              width: '100%', padding: '8px 12px', borderRadius: 6,
-              border: '1px solid #0a66c2', background: '#0a66c2',
-              color: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 500,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              Connect LinkedIn
+            <button onClick={onLinkedInLogin} style={btnStyle('#0a66c2', false)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              LinkedIn
             </button>
           )}
+
+          {instagramUser ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ ...btnStyle('#E4405F', true), flex: 1 }}>
+                {instagramUser.pageName}
+              </span>
+              <button
+                onClick={onInstagramLogout}
+                title="Disconnect"
+                style={{
+                  width: 22, height: 22, borderRadius: '50%',
+                  background: '#ef4444', color: 'white', border: 'none',
+                  cursor: 'pointer', fontSize: 10, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                x
+              </button>
+            </div>
+          ) : (
+            <button onClick={onInstagramLogin} style={btnStyle('#E4405F', false)}>
+              Instagram
+            </button>
+          )}
+
+          <button style={{ ...btnStyle('#1877F2', false), opacity: 0.5, cursor: 'not-allowed' }}>
+            Facebook (Coming soon)
+          </button>
         </div>
 
         <div className="sidebar-section">
@@ -143,40 +175,25 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
-                <DraftCard
-                  draft={item}
-                  onClick={() => {}}
-                  type="history"
-                />
+                <DraftCard draft={item} onClick={() => {}} type="history" />
               </a>
             ))}
           </div>
         )}
 
-        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
-          <div className="sidebar-section-title">Instagram</div>
-          {instagramUser ? (
-            <div style={{ padding: '12px 16px' }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{instagramUser.pageName}</div>
-              <div style={{ fontSize: 11, color: '#16a34a' }}>Connected</div>
-              {instagramPosts.length > 0 && instagramPosts.map(item => (
-                <div key={item.id} style={{ marginTop: 8, padding: 8, background: '#f9fafb', borderRadius: 4, fontSize: 12 }}>
-                  {typeof item.content === 'string' ? item.content.substring(0, 80) + '...' : 'Post'}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ padding: '12px 16px' }}>
-              <button onClick={onInstagramLogin} style={{
-                width: '100%', padding: '8px 12px', borderRadius: 6,
-                border: '1px solid #E4405F', background: '#E4405F',
-                color: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 500,
-              }}>
-                Connect Instagram
-              </button>
-            </div>
-          )}
-        </div>
+        {instagramUser && (
+          <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
+            <div className="sidebar-section-title">Instagram ({instagramPosts.length})</div>
+            {instagramPosts.length === 0 && (
+              <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
+                No posts yet
+              </div>
+            )}
+            {instagramPosts.map(item => (
+              <DraftCard key={item.id} draft={item} onClick={() => {}} type="history" />
+            ))}
+          </div>
+        )}
 
         <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
           <div className="sidebar-section-title">Facebook</div>
