@@ -7,7 +7,7 @@ const REDIRECT_URI = 'http://localhost:5001/api/instagram/callback';
 const FRONTEND_URI = 'http://localhost:3000';
 
 router.get('/auth', (req, res) => {
-  const scopes = 'pages_show_list,pages_read_engagement,instagram_basic,instagram_content_publish';
+  const scopes = 'public_profile,pages_show_list,pages_manage_posts';
   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${INSTAGRAM_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scopes)}&response_type=code`;
   res.redirect(authUrl);
 });
