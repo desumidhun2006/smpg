@@ -34,21 +34,16 @@ export default function DraftCard({ draft, isActive, onClick, onDelete, type = '
             ))}
           </div>
           {type === 'history' && draft.postUrl && (
-            <a
-              href={draft.postUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <span
               style={{
                 display: 'inline-block',
                 marginTop: 4,
                 fontSize: 12,
                 color: '#0a66c2',
-                textDecoration: 'none',
               }}
             >
               View on LinkedIn
-            </a>
+            </span>
           )}
         </div>
         {onDelete && (
