@@ -115,9 +115,14 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
           ))}
         </div>
 
-        {linkedinUser && linkedinPosts.length > 0 && (
+        {linkedinUser && (
           <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
             <div className="sidebar-section-title">LinkedIn ({linkedinPosts.length})</div>
+            {linkedinPosts.length === 0 && (
+              <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
+                No posts yet
+              </div>
+            )}
             {linkedinPosts.map(item => (
               <a
                 key={item.id}
