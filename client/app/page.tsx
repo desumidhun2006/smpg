@@ -70,8 +70,25 @@ export default function Home() {
     const savedToken = localStorage.getItem('smpg_linkedin_token');
     const savedUser = localStorage.getItem('smpg_linkedin_user');
     if (savedToken && savedUser) {
+      const user = JSON.parse(savedUser);
       setLinkedinToken(savedToken);
-      setLinkedinUser(JSON.parse(savedUser));
+      setLinkedinUser(user);
+      if (!user.profileUrl) {
+        fetch(`${API_BASE}/api/linkedin/profile-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken: savedToken }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.profileUrl) {
+              const updated = { ...user, profileUrl: data.profileUrl };
+              setLinkedinUser(updated);
+              localStorage.setItem('smpg_linkedin_user', JSON.stringify(updated));
+            }
+          })
+          .catch(() => {});
+      }
       verifyLinkedInPosts(loadedHistory, savedToken);
     } else {
       const cleaned = loadedHistory.filter(i => i.postUrl);

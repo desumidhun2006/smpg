@@ -229,4 +229,23 @@ router.post('/check-post', async (req, res) => {
   }
 });
 
+router.post('/profile-url', async (req, res) => {
+  const { accessToken } = req.body;
+  if (!accessToken) return res.json({ profileUrl: null });
+
+  try {
+    const meRes = await fetch('https://api.linkedin.com/v2/me?projection=(id,vanityName)', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const meData = await meRes.json();
+    if (meData.vanityName) {
+      res.json({ profileUrl: `https://www.linkedin.com/in/${meData.vanityName}/recent-activity/all/` });
+    } else {
+      res.json({ profileUrl: null });
+    }
+  } catch {
+    res.json({ profileUrl: null });
+  }
+});
+
 module.exports = router;
