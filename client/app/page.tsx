@@ -175,6 +175,9 @@ export default function Home() {
     setLinkedinUser(null);
     localStorage.removeItem('smpg_linkedin_token');
     localStorage.removeItem('smpg_linkedin_user');
+    const cleaned = history.filter(i => !i.platforms.includes('linkedin'));
+    setHistory(cleaned);
+    saveHistory(cleaned);
   };
 
   const handleInstagramLogin = () => {
@@ -186,6 +189,9 @@ export default function Home() {
     setInstagramUser(null);
     localStorage.removeItem('smpg_instagram_token');
     localStorage.removeItem('smpg_instagram_user');
+    const cleaned = history.filter(i => !i.platforms.includes('instagram'));
+    setHistory(cleaned);
+    saveHistory(cleaned);
   };
 
   const handleGenerate = async (desc: string, platforms: string[], files: File[]) => {
