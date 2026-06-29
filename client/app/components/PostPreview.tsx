@@ -9,10 +9,12 @@ interface PostPreviewProps {
   description: string;
   onClear: () => void;
   linkedinConnected?: boolean;
+  instagramConnected?: boolean;
   posting?: boolean;
+  hasImages?: boolean;
 }
 
-export default function PostPreview({ posts, onSaveDraft, onPost, description, onClear, linkedinConnected, posting }: PostPreviewProps) {
+export default function PostPreview({ posts, onSaveDraft, onPost, description, onClear, linkedinConnected, instagramConnected, posting, hasImages }: PostPreviewProps) {
   const [editing, setEditing] = useState(false);
   const [editedContent, setEditedContent] = useState<string>(Object.values(posts)[0] || '');
 
@@ -33,6 +35,8 @@ export default function PostPreview({ posts, onSaveDraft, onPost, description, o
   };
 
   const needsLinkedIn = platforms.includes('linkedin') && !linkedinConnected;
+  const needsInstagram = platforms.includes('instagram') && !instagramConnected;
+  const instagramNeedsImage = platforms.includes('instagram') && instagramConnected && !hasImages;
 
   return (
     <div className="post-preview">
@@ -83,6 +87,18 @@ export default function PostPreview({ posts, onSaveDraft, onPost, description, o
         </div>
       )}
 
+      {needsInstagram && (
+        <div style={{ padding: 12, background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 6, marginBottom: 16, color: '#be123c', fontSize: 14 }}>
+          Connect your Instagram account in the sidebar to post here.
+        </div>
+      )}
+
+      {instagramNeedsImage && (
+        <div style={{ padding: 12, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 6, marginBottom: 16, color: '#c2410c', fontSize: 14 }}>
+          Instagram requires at least one image to post.
+        </div>
+      )}
+
       <div className="btn-group">
         <button className="btn btn-secondary" onClick={() => setEditing(!editing)}>
           {editing ? 'Done Editing' : 'Edit'}
@@ -93,9 +109,9 @@ export default function PostPreview({ posts, onSaveDraft, onPost, description, o
         <button
           className="btn btn-success"
           onClick={handlePost}
-          disabled={posting || needsLinkedIn}
+          disabled={posting || needsLinkedIn || needsInstagram || instagramNeedsImage}
         >
-          {posting ? 'Posting...' : needsLinkedIn ? 'Connect LinkedIn First' : 'Post Now'}
+          {posting ? 'Posting...' : needsLinkedIn ? 'Connect LinkedIn First' : needsInstagram ? 'Connect Instagram First' : instagramNeedsImage ? 'Add Image for Instagram' : 'Post Now'}
         </button>
       </div>
     </div>

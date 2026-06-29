@@ -26,6 +26,14 @@ interface LinkedInUser {
   profileUrl: string;
 }
 
+interface InstagramUser {
+  name: string;
+  id: string;
+  igAccountId: string;
+  pageId: string;
+  pageName: string;
+}
+
 interface SidebarProps {
   drafts: Draft[];
   history: HistoryItem[];
@@ -37,10 +45,14 @@ interface SidebarProps {
   linkedinUser: LinkedInUser | null;
   onLinkedInLogin: () => void;
   onLinkedInLogout: () => void;
+  instagramUser: InstagramUser | null;
+  onInstagramLogin: () => void;
+  onInstagramLogout: () => void;
 }
 
-export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft, onDeleteDraft, isOpen, onToggle, linkedinUser, onLinkedInLogin, onLinkedInLogout }: SidebarProps) {
+export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft, onDeleteDraft, isOpen, onToggle, linkedinUser, onLinkedInLogin, onLinkedInLogout, instagramUser, onInstagramLogin, onInstagramLogout }: SidebarProps) {
   const linkedinPosts = history.filter(i => i.platforms.includes('linkedin'));
+  const instagramPosts = history.filter(i => i.platforms.includes('instagram'));
 
   return (
     <>
@@ -143,9 +155,27 @@ export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft,
 
         <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
           <div className="sidebar-section-title">Instagram</div>
-          <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
-            Coming soon
-          </div>
+          {instagramUser ? (
+            <div style={{ padding: '12px 16px' }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>{instagramUser.pageName}</div>
+              <div style={{ fontSize: 11, color: '#16a34a' }}>Connected</div>
+              {instagramPosts.length > 0 && instagramPosts.map(item => (
+                <div key={item.id} style={{ marginTop: 8, padding: 8, background: '#f9fafb', borderRadius: 4, fontSize: 12 }}>
+                  {typeof item.content === 'string' ? item.content.substring(0, 80) + '...' : 'Post'}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '12px 16px' }}>
+              <button onClick={onInstagramLogin} style={{
+                width: '100%', padding: '8px 12px', borderRadius: 6,
+                border: '1px solid #E4405F', background: '#E4405F',
+                color: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+              }}>
+                Connect Instagram
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>

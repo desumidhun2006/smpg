@@ -7,6 +7,7 @@ const generateRoutes = require('./routes/generate');
 const draftsRoutes = require('./routes/drafts');
 const postRoutes = require('./routes/post');
 const linkedinRoutes = require('./routes/linkedin');
+const instagramRoutes = require('./routes/instagram');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -19,6 +20,7 @@ app.use('/api/drafts', draftsRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/history', postRoutes);
 app.use('/api/linkedin', linkedinRoutes);
+app.use('/api/instagram', instagramRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

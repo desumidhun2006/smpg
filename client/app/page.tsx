@@ -31,6 +31,14 @@ interface LinkedInUser {
   profileUrl: string;
 }
 
+interface InstagramUser {
+  name: string;
+  id: string;
+  igAccountId: string;
+  pageId: string;
+  pageName: string;
+}
+
 function loadDrafts(): Draft[] {
   if (typeof window === 'undefined') return [];
   try { return JSON.parse(localStorage.getItem('smpg_drafts') || '[]'); } catch { return []; }
@@ -60,6 +68,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [linkedinUser, setLinkedinUser] = useState<LinkedInUser | null>(null);
   const [linkedinToken, setLinkedinToken] = useState<string | null>(null);
+  const [instagramUser, setInstagramUser] = useState<InstagramUser | null>(null);
+  const [instagramToken, setInstagramToken] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [currentImages, setCurrentImages] = useState<string[]>([]);
 
@@ -99,16 +109,31 @@ export default function Home() {
       }
     }
 
+    const savedIgToken = localStorage.getItem('smpg_instagram_token');
+    const savedIgUser = localStorage.getItem('smpg_instagram_user');
+    if (savedIgToken && savedIgUser) {
+      setInstagramToken(savedIgToken);
+      setInstagramUser(JSON.parse(savedIgUser));
+    }
+
     const handler = (e: MessageEvent) => {
-      if (e.data && e.data.accessToken) {
+      if (e.data && e.data.accessToken && e.data.user && e.data.user.igAccountId) {
+        setInstagramToken(e.data.accessToken);
+        setInstagramUser(e.data.user);
+        localStorage.setItem('smpg_instagram_token', e.data.accessToken);
+        localStorage.setItem('smpg_instagram_user', JSON.stringify(e.data.user));
+        return;
+      }
+      if (e.data && e.data.accessToken && e.data.user) {
         setLinkedinToken(e.data.accessToken);
         setLinkedinUser(e.data.user);
         localStorage.setItem('smpg_linkedin_token', e.data.accessToken);
         localStorage.setItem('smpg_linkedin_user', JSON.stringify(e.data.user));
         verifyLinkedInPosts(loadHistory(), e.data.accessToken);
+        return;
       }
       if (e.data && e.data.error) {
-        setError('LinkedIn login failed: ' + e.data.error);
+        setError(e.data.error);
       }
     };
     window.addEventListener('message', handler);
@@ -150,6 +175,17 @@ export default function Home() {
     setLinkedinUser(null);
     localStorage.removeItem('smpg_linkedin_token');
     localStorage.removeItem('smpg_linkedin_user');
+  };
+
+  const handleInstagramLogin = () => {
+    window.open(`${API_BASE}/api/instagram/auth`, 'instagram-auth', 'width=600,height=700');
+  };
+
+  const handleInstagramLogout = () => {
+    setInstagramToken(null);
+    setInstagramUser(null);
+    localStorage.removeItem('smpg_instagram_token');
+    localStorage.removeItem('smpg_instagram_user');
   };
 
   const handleGenerate = async (desc: string, platforms: string[], files: File[]) => {
@@ -243,6 +279,43 @@ export default function Home() {
       setPosting(false);
     }
 
+    if (platforms.includes('instagram')) {
+      if (!instagramToken || !instagramUser) {
+        setError('Please connect Instagram first');
+        return;
+      }
+
+      if (!currentImages || currentImages.length === 0) {
+        setError('Instagram requires at least one image to post');
+        return;
+      }
+
+      setPosting(true);
+      try {
+        const postText = Object.values(content)[0];
+        const res = await fetch(`${API_BASE}/api/instagram/post`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caption: postText,
+            accessToken: instagramToken,
+            igAccountId: instagramUser.igAccountId,
+            images: currentImages,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Instagram post failed');
+        }
+      } catch (err: any) {
+        setError('Instagram post failed: ' + err.message);
+        setPosting(false);
+        return;
+      }
+      setPosting(false);
+    }
+
     const item: HistoryItem = {
       id: crypto.randomUUID(),
       content,
@@ -300,6 +373,9 @@ export default function Home() {
         linkedinUser={linkedinUser}
         onLinkedInLogin={handleLinkedInLogin}
         onLinkedInLogout={handleLinkedInLogout}
+        instagramUser={instagramUser}
+        onInstagramLogin={handleInstagramLogin}
+        onInstagramLogout={handleInstagramLogout}
       />
 
       <main className="main-content">
@@ -325,7 +401,9 @@ export default function Home() {
             description={description}
             onClear={handleClear}
             linkedinConnected={!!linkedinToken}
+            instagramConnected={!!instagramToken}
             posting={posting}
+            hasImages={currentImages.length > 0}
           />
         ) : (
           !loading && <UploadForm onGenerate={handleGenerate} loading={loading} />
