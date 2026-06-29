@@ -66,6 +66,7 @@ export default function Home() {
   useEffect(() => {
     const loadedHistory = loadHistory();
     setDrafts(loadDrafts());
+    setHistory(loadedHistory);
 
     const savedToken = localStorage.getItem('smpg_linkedin_token');
     const savedUser = localStorage.getItem('smpg_linkedin_user');
@@ -95,8 +96,6 @@ export default function Home() {
       if (cleaned.length !== loadedHistory.length) {
         setHistory(cleaned);
         saveHistory(cleaned);
-      } else {
-        setHistory(loadedHistory);
       }
     }
 
@@ -292,6 +291,7 @@ export default function Home() {
     <div className="app-container">
       <Sidebar
         drafts={drafts}
+        history={history}
         activeDraftId={activeDraftId}
         onSelectDraft={handleSelectDraft}
         onDeleteDraft={handleDeleteDraft}

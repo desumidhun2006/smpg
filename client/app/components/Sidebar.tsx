@@ -10,6 +10,15 @@ interface Draft {
   createdAt: string;
 }
 
+interface HistoryItem {
+  id: string;
+  content: Record<string, string> | string;
+  platforms: string[];
+  description: string;
+  postedAt: string;
+  postUrl?: string;
+}
+
 interface LinkedInUser {
   sub: string;
   name: string;
@@ -19,6 +28,7 @@ interface LinkedInUser {
 
 interface SidebarProps {
   drafts: Draft[];
+  history: HistoryItem[];
   activeDraftId: string | null;
   onSelectDraft: (draft: Draft) => void;
   onDeleteDraft: (id: string) => void;
@@ -29,7 +39,9 @@ interface SidebarProps {
   onLinkedInLogout: () => void;
 }
 
-export default function Sidebar({ drafts, activeDraftId, onSelectDraft, onDeleteDraft, isOpen, onToggle, linkedinUser, onLinkedInLogin, onLinkedInLogout }: SidebarProps) {
+export default function Sidebar({ drafts, history, activeDraftId, onSelectDraft, onDeleteDraft, isOpen, onToggle, linkedinUser, onLinkedInLogin, onLinkedInLogout }: SidebarProps) {
+  const linkedinPosts = history.filter(i => i.platforms.includes('linkedin'));
+
   return (
     <>
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -101,6 +113,41 @@ export default function Sidebar({ drafts, activeDraftId, onSelectDraft, onDelete
               type="draft"
             />
           ))}
+        </div>
+
+        {linkedinUser && linkedinPosts.length > 0 && (
+          <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
+            <div className="sidebar-section-title">LinkedIn ({linkedinPosts.length})</div>
+            {linkedinPosts.map(item => (
+              <a
+                key={item.id}
+                href={item.postUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <DraftCard
+                  draft={item}
+                  onClick={() => {}}
+                  type="history"
+                />
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
+          <div className="sidebar-section-title">Instagram</div>
+          <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
+            Coming soon
+          </div>
+        </div>
+
+        <div className="sidebar-section" style={{ borderTop: '1px solid #e5e7eb' }}>
+          <div className="sidebar-section-title">Facebook</div>
+          <div className="empty-state" style={{ padding: 16, fontSize: 13 }}>
+            Coming soon
+          </div>
         </div>
       </div>
 
